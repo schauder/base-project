@@ -1,0 +1,62 @@
+apply plugin: 'java'
+
+/*
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.7'
+}
+*/
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+version = '1.0'
+
+
+apply plugin: 'checkstyle'
+checkstyle {
+    toolVersion = '6.7'
+    ignoreFailures = false
+}
+
+// find checkstyle warnings and throw exception when there are any. compare https://issues.gradle.org/browse/GRADLE-2888
+task verifyNoCheckstyleWarnings(type: GradleBuild) {
+    doLast {
+        def reportLocation = 'build/reports/checkstyle/'
+        def reports = ['main.xml', 'test.xml']
+        reports.each {
+            File warningsFile = file(reportLocation + it)
+            if (warningsFile.exists() && warningsFile.text.contains("<error ")) {
+                throw new GradleException("There were checkstyle warnings! For more info check $warningsFile")
+            }
+        }
+    }
+}
+checkstyleMain.finalizedBy verifyNoCheckstyleWarnings
+
+
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+
+apply plugin: "jacoco"
+jacoco {
+    toolVersion = '0.7.4.201502262128'
+}
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        csv.enabled false
+        html.enabled true
+    }
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-all:1.10.19'
+}
